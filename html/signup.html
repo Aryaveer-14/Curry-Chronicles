@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - The Curry Chronicles</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Roboto&display=swap" rel="stylesheet">
+</head>
+<body class="sub-page-background"> <!-- Class added for full black background -->
+
+    <header class="hero-section minimal-hero">
+        <div class="navbar">
+            <div class="logo">The Curry Chronicles</div>
+            <div class="search-bar">
+                <form action="/search" method="get">
+                    <input type="text" placeholder="Search for a restaurant..." name="q">
+                    <button type="submit">Search</button>
+                </form>
+            </div>
+            <nav class="nav-links">
+                <a href="signup.html" class="active">Sign Up</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="content-section">
+        <div class="container">
+            <h2>Join The Curry Chronicles Community!</h2>
+            <p>Become a part of our vibrant community of curry enthusiasts. Sign up today to share your reviews, discover new favorites, and connect with fellow food lovers.</p>
+            <form class="signup-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" name="confirm-password" required>
+                </div>
+                <button type="submit" class="cta-button">Create Account</button>
+            </form>
+        </div>
+    </main>
+
+</body>
+</html>
