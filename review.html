@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review — The Curry Chronicles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .restaurant-card img { height: 160px; object-fit: cover; }
+    </style>
+</head>
+<body class="h-full bg-gray-900 text-gray-200 font-inter flex flex-col">
+    <div class="container mx-auto px-4 py-6">
+        <header class="flex items-center justify-between mb-6">
+            <a href="index.html" class="nav-link font-playfair text-2xl">The Curry Chronicles</a>
+            <nav>
+                <ul class="hidden md:flex items-center space-x-6">
+                    <li><a href="about.html" class="nav-link">About</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <li><a href="live-ranking.html" class="nav-link">Live Ranking</a></li>
+                    <li><a href="review.html" class="nav-link active">Review</a></li>
+                    <li><a href="signup.html" class="nav-link">Sign Up</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <section>
+            <h2 class="text-3xl font-playfair mb-2">Review Restaurants — Mumbai (Rate 1–10)</h2>
+            <p class="text-gray-400 mb-6">Submit your rating for any restaurant. Ratings are posted to the local server when available and saved locally as a fallback.</p>
+
+            <div class="mb-4 flex items-center gap-4">
+                <button id="reset-ratings" class="ml-auto bg-amber-700 hover:bg-amber-800 px-3 py-1 rounded">Reset All Ratings</button>
+            </div>
+
+            <div id="restaurants" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+
+            <div id="pagination" class="mt-6 flex items-center justify-center space-x-4"></div>
+        </section>
+    </div>
+
+    <script src="restaurants-data.js"></script>
+    <script>
+    (function(){
+        const restaurants = window.restaurants || [];
+    const STORAGE_KEY = 'mumbai_restaurant_ratings_v1';
+    const PAGE_SIZE = 12; // items per page
+    let currentPage = 1;
+
+        function getApiBases() {
+            const bases = [];
+            try { bases.push(window.location.origin); } catch (e) {}
+            bases.push('http://localhost:3000');
+            return Array.from(new Set(bases));
+        }
+
+        async function tryFetchOnBases(path, options) {
+            const bases = getApiBases();
+            for (const b of bases) {
+                try {
+                    const url = b.replace(/\/$/, '') + path;
+                    const res = await fetch(url, options);
+                    if (res && res.ok) return res;
+                } catch (e) {}
+            }
+            return null;
+        }
+
+        async function fetchStatsFromServer() {
+            try { const res = await tryFetchOnBases('/api/stats'); if (!res) return null; return await res.json(); } catch (e) { return null; }
+        }
+
+        function loadRatings() { try { const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return {}; return JSON.parse(raw); } catch (e) { console.error('Failed to load ratings', e); return {}; } }
+        function saveRatings(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+        function showToast(message, type = 'info') {
+            let wrap = document.getElementById('toast-wrap');
+            if (!wrap) { wrap = document.createElement('div'); wrap.id = 'toast-wrap'; wrap.style.position='fixed'; wrap.style.right='16px'; wrap.style.top='16px'; wrap.style.zIndex='9999'; document.body.appendChild(wrap); }
+            const el = document.createElement('div'); el.textContent = message;
+            el.style.background = type==='error' ? '#ff6b6b' : (type==='success' ? '#4ade80' : '#334155');
+            el.style.color = '#fff'; el.style.padding = '8px 12px'; el.style.borderRadius='6px'; el.style.marginTop='8px'; el.style.boxShadow='0 4px 10px rgba(0,0,0,0.2)'; wrap.appendChild(el);
+            setTimeout(()=>el.remove(),3500);
+        }
+
+        async function submitRating(id, value) {
+            const btn = document.querySelector(`.rate-btn[data-id="${id}"]`);
+            if (btn) btn.disabled = true;
+            try {
+                const res = await tryFetchOnBases('/api/rate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id, rating: value}) });
+                if (res) { showToast('Rating submitted (server)','success'); await renderRestaurants(); return; }
+            } catch (e) {}
+            try { const data = loadRatings(); if (!data[id]) data[id]=[]; data[id].push(value); saveRatings(data); showToast('Rating saved locally (server unavailable)','info'); await renderRestaurants(); } catch (err) { showToast('Failed to save rating','error'); }
+            finally { if (btn) btn.disabled = false; }
+        }
+
+        async function resetRatings() { if (!confirm('Reset all ratings? This will clear local ratings stored in your browser and on the local server (if running).')) return; try { await tryFetchOnBases('/api/reset',{method:'POST'}); } catch (e){} localStorage.removeItem(STORAGE_KEY); await renderRestaurants(); }
+
+        function createCard(r, stats) {
+            const avgText = stats && stats.count ? (stats.avg).toFixed(2) : '—';
+            const countText = stats && stats.count ? stats.count : 0;
+            const imgSrc = r.imgLarge || r.imgThumb || r.img || '';
+            const card = document.createElement('div');
+            card.className = 'restaurant-card bg-gray-800 rounded overflow-hidden shadow-lg';
+            card.innerHTML = `
+                <img src="${imgSrc}" alt="${r.name}" loading="lazy" class="w-full object-cover h-40">
+                <div class="p-4">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold">${r.name}</h3>
+                        <div class="text-right">
+                            <div class="text-sm text-gray-400">Avg</div>
+                            <div class="text-lg font-semibold">${avgText}</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">${countText} rating(s)</p>
+                    <div class="mt-3">
+                        <a href="restaurant.html?id=${r.id}" class="bg-amber-600 hover:bg-amber-700 px-3 py-1 rounded text-sm inline-block">Review</a>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        function renderPagination(totalItems) {
+            const pages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+            const wrap = document.getElementById('pagination');
+            wrap.innerHTML = '';
+            const prev = document.createElement('button'); prev.textContent = 'Prev'; prev.className = 'px-3 py-1 bg-gray-700 rounded'; prev.disabled = currentPage === 1; prev.addEventListener('click', ()=>{ if (currentPage>1) { currentPage--; renderRestaurants(); } });
+            const next = document.createElement('button'); next.textContent = 'Next'; next.className = 'px-3 py-1 bg-gray-700 rounded'; next.disabled = currentPage === pages; next.addEventListener('click', ()=>{ if (currentPage<pages) { currentPage++; renderRestaurants(); } });
+            wrap.appendChild(prev);
+            // show up to 7 page buttons centered around current
+            const start = Math.max(1, currentPage - 3);
+            const end = Math.min(pages, start + 6);
+            for (let p = start; p <= end; p++) {
+                const b = document.createElement('button'); b.textContent = p; b.className = `px-3 py-1 rounded ${p===currentPage? 'bg-amber-600 text-white' : 'bg-gray-700 text-gray-200'}`;
+                b.addEventListener('click', ()=>{ currentPage = p; renderRestaurants(); });
+                wrap.appendChild(b);
+            }
+            wrap.appendChild(next);
+        }
+
+        async function renderRestaurants() {
+            const container = document.getElementById('restaurants');
+            container.innerHTML = '';
+            const serverStats = await fetchStatsFromServer();
+            const local = loadRatings();
+            const statsLookup = {};
+            restaurants.forEach(r => {
+                if (serverStats && serverStats[r.id]) statsLookup[r.id] = serverStats[r.id]; else { const arr = local[r.id] || []; const count = arr.length; const avg = count ? (arr.reduce((s,v)=>s+v,0)/count) : 0; statsLookup[r.id] = {count, avg}; }
+            });
+
+            const total = restaurants.length;
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const slice = restaurants.slice(start, start + PAGE_SIZE);
+            slice.forEach(r=>{ const card=createCard(r, statsLookup[r.id]); container.appendChild(card); });
+            container.querySelectorAll('.rate-btn').forEach(btn=>{ btn.addEventListener('click', ()=>{ const id=btn.getAttribute('data-id'); const sel = container.querySelector(`.rating-select[data-id="${id}"]`); const val = parseInt(sel.value,10); if (!val || val<1 || val>10) { alert('Please choose a rating from 1 to 10.'); return; } submitRating(id,val); }); });
+
+            renderPagination(total);
+        }
+
+        document.addEventListener('DOMContentLoaded', ()=>{ const resetBtn = document.getElementById('reset-ratings'); if (resetBtn) resetBtn.addEventListener('click', resetRatings); renderRestaurants(); });
+    })();
+    </script>
+</body>
+</html>

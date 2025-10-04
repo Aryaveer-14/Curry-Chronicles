@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results | The Curry Chronicles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="h-full bg-gray-900 text-gray-200 font-inter flex flex-col">
+
+    <div class="page-transition"></div>
+
+    <div class="parallax-container">
+        <video autoplay muted loop id="video-bg">
+            <source src="Bg video.mp4" type="video/mp4" 
+            onerror="this.parentElement.style.display='none'; document.body.style.backgroundColor='#111827';">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <div class="content-wrapper">
+        <header class="bg-black/50 backdrop-blur-sm sticky top-0 z-50">
+            <div class="container mx-auto px-4 sm:px-6 py-4">
+                <div class="flex items-center justify-between flex-wrap">
+                    <div class="flex-shrink-0">
+                        <a href="index.html" class="nav-link" title="Home">
+                           <h1 class="text-xl font-semibold font-playfair text-white whitespace-nowrap">The Curry Chronicles</h1>
+                        </a>
+                    </div>
+
+                    <div class="block md:hidden">
+                        <button id="menu-toggle" class="text-gray-300 hover:text-white focus:outline-none">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div id="menu-content" class="w-full md:flex md:items-center md:w-auto hidden mt-4 md:mt-0">
+                        <form action="search.html" method="GET" class="w-full md:w-auto flex-1 md:flex-grow-0 md:pr-4">
+                           <div class="relative w-full max-w-md mx-auto flex">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                                </div>
+                                <input id="search" name="q" class="block w-full bg-gray-700/50 border border-transparent rounded-l-md py-2 pl-10 pr-3 text-white placeholder-gray-400 focus:outline-none focus:bg-gray-600 focus:border-amber-600 focus:ring-amber-600 sm:text-sm" placeholder="Search for cafes..." type="search">
+                                <button type="submit" class="bg-amber-700 hover:bg-amber-800 text-white font-semibold px-4 rounded-r-md transition-colors duration-300">Search</button>
+                            </div>
+                        </form>
+                        <nav class="w-full md:w-auto">
+                            <ul class="flex flex-col md:flex-row items-center md:space-x-8 mt-4 md:mt-0">
+                                <li class="w-full md:w-auto text-center py-2 md:py-0"><a href="about.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">About</a></li>
+                                <li class="w-full md:w-auto text-center py-2 md:py-0"><a href="contact.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">Contact</a></li>
+                                <li class="w-full md:w-auto text-center py-2 md:py-0"><a href="signup.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">Sign Up</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-grow">
+             <div class="container mx-auto px-4 sm:px-6 py-12 md:py-16">
+                <h1 class="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-white mb-2 text-center hero-zoom" data-aos="fade-down">Search Results</h1>
+                <p id="search-subtitle" class="text-center text-gray-400 mb-10" data-aos="fade-down" data-aos-delay="100">Showing popular spots in Mumbai</p>
+
+                <div id="search-results" class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                
+                <script src="restaurants-data.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
+                <script>
+                (function(){
+                    // zoom-out hero styles
+                    const style = document.createElement('style');
+                    style.textContent = `.hero-zoom { transform-origin: center; animation: zoomOut 900ms cubic-bezier(.2,.8,.2,1) both; } @keyframes zoomOut{0%{transform:scale(2.6);opacity:0}60%{transform:scale(1.05);opacity:1}100%{transform:scale(1);opacity:1}}`;
+                    document.head.appendChild(style);
+
+                    const restaurants = window.restaurants || [];
+                    const results = document.getElementById('search-results');
+                    const subtitle = document.getElementById('search-subtitle');
+
+                    // UI: clear button
+                    const clearBtn = document.createElement('button');
+                    clearBtn.textContent = 'Clear';
+                    clearBtn.id = 'clear-search';
+                    clearBtn.className = 'ml-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded';
+                    subtitle.insertAdjacentElement('afterend', clearBtn);
+                    clearBtn.addEventListener('click', () => { window.location = 'search.html'; });
+
+                    function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&'); }
+                    function highlight(text, q) {
+                        if (!q) return text;
+                        const re = new RegExp('('+escapeRegex(q)+')', 'ig');
+                        return text.replace(re, '<mark class="bg-amber-400/30 text-amber-200 rounded px-1">$1</mark>');
+                    }
+
+                    // Fuse.js setup for fuzzy search
+                    const fuse = new Fuse(restaurants, { keys: ['name','location'], threshold: 0.35, includeScore: true });
+
+                    // Pagination / infinite scroll
+                    const PAGE_SIZE = 8;
+                    let filtered = [];
+                    let currentPage = 0;
+
+                    function makeCardHTML(r, qRaw){
+                        return `
+                            <img src="${r.imgThumb || r.img}" alt="${r.name}" loading="lazy" class="w-full rounded mb-3 object-cover h-36">
+                            <h2 class="text-2xl font-playfair font-bold text-amber-500 mb-2">${highlight(r.name, qRaw)}</h2>
+                            <p class="text-gray-400 mb-1">${highlight(r.location, qRaw)}</p>
+                            <p class="text-gray-300 leading-relaxed">A popular spot in Mumbai — use the Live Ranking page to rate and see live averages.</p>
+                        `;
+                    }
+
+                    function renderPagePage() {
+                        const qRaw = currentQueryRaw || '';
+                        const start = currentPage * PAGE_SIZE;
+                        const chunk = filtered.slice(start, start + PAGE_SIZE);
+                        if (start === 0) results.innerHTML = '';
+                        if (!chunk.length && start === 0) {
+                            const empty = document.createElement('div');
+                            empty.className = 'col-span-1 md:col-span-2 text-center text-gray-400';
+                            empty.innerHTML = `<p class="text-lg">No results found for <strong>"${qRaw}"</strong>.</p>`;
+                            results.appendChild(empty);
+                            loadMoreBtn.style.display = 'none';
+                            return;
+                        }
+
+                        chunk.forEach((r, i) => {
+                            const card = document.createElement('div');
+                            card.className = 'bg-gray-900/60 backdrop-blur-sm p-6 rounded-lg shadow-lg';
+                            card.setAttribute('data-aos','fade-up');
+                            card.setAttribute('data-aos-delay', 200 + ((start + i)%2===0?0:100));
+                            card.innerHTML = makeCardHTML(r, qRaw);
+                            results.appendChild(card);
+                        });
+
+                        // toggle Load more
+                        if ((start + PAGE_SIZE) < filtered.length) {
+                            loadMoreBtn.style.display = 'block';
+                        } else {
+                            loadMoreBtn.style.display = 'none';
+                        }
+                    }
+
+                    // Load more button
+                    const loadMoreBtn = document.createElement('button');
+                    loadMoreBtn.textContent = 'Load more';
+                    loadMoreBtn.className = 'mx-auto block mt-6 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded';
+                    loadMoreBtn.style.display = 'none';
+                    loadMoreBtn.addEventListener('click', () => {
+                        currentPage += 1; renderPagePage();
+                    });
+                    results.insertAdjacentElement('afterend', loadMoreBtn);
+
+                    // infinite scroll: when near bottom, trigger load more
+                    let loadingMore = false;
+                    window.addEventListener('scroll', () => {
+                        if (loadMoreBtn.style.display === 'none') return;
+                        if (loadingMore) return;
+                        const rect = loadMoreBtn.getBoundingClientRect();
+                        if (rect.top < window.innerHeight + 100) {
+                            loadingMore = true;
+                            loadMoreBtn.click();
+                            setTimeout(()=> loadingMore = false, 600);
+                        }
+                    });
+
+                    // read query param and perform fuzzy filtering
+                    const params = new URLSearchParams(window.location.search);
+                    const currentQueryRaw = params.get('q') || '';
+                    const q = currentQueryRaw.trim();
+
+                    if (q) {
+                        subtitle.textContent = `Showing results for "${currentQueryRaw}"`;
+                        // fuzzy search with Fuse
+                        const fuseRes = fuse.search(q, { limit: 200 });
+                        filtered = fuseRes.map(r => r.item);
+                        // if fuse returns nothing, fallback to simple substring
+                        if (!filtered.length) {
+                            const lower = q.toLowerCase();
+                            filtered = restaurants.filter(r => r.name.toLowerCase().includes(lower) || (r.location && r.location.toLowerCase().includes(lower)));
+                        }
+                    } else {
+                        subtitle.textContent = 'Showing popular spots in Mumbai';
+                        filtered = restaurants.slice();
+                    }
+
+                    // initialize pagination
+                    currentPage = 0;
+                    renderPagePage();
+
+                })();
+                </script>
+            </div>
+        </main>
+        
+        <footer class="bg-black/50 py-4 mt-auto">
+            <div class="container mx-auto px-6 text-center text-gray-500">
+                <p>&copy; 2024 The Curry Chronicles. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

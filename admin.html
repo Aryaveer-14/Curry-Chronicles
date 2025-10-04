@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — The Curry Chronicles</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-900 text-gray-200 font-inter min-h-screen">
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-semibold mb-4">Admin</h1>
+    <div id="login" class="max-w-md bg-gray-800 rounded p-6">
+      <p class="text-sm text-gray-400 mb-3">Enter admin credentials to view raw data and perform maintenance.</p>
+      <div class="space-y-3">
+        <input id="user" class="w-full bg-gray-700 px-3 py-2 rounded" placeholder="username">
+        <input id="pass" type="password" class="w-full bg-gray-700 px-3 py-2 rounded" placeholder="password">
+        <div class="flex gap-3">
+          <button id="loginBtn" class="bg-amber-600 px-4 py-2 rounded">Login</button>
+          <button id="clearLocal" class="bg-gray-700 px-3 py-2 rounded">Clear local ratings</button>
+        </div>
+        <div id="loginMsg" class="text-sm"></div>
+      </div>
+    </div>
+
+    <div id="panel" class="hidden mt-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Raw Data</h2>
+        <div>
+          <button id="download" class="bg-green-600 px-3 py-1 rounded mr-2">Download JSON</button>
+          <button id="logout" class="bg-gray-700 px-3 py-1 rounded">Logout</button>
+        </div>
+      </div>
+      <div class="mb-4">
+        <button id="resetData" class="bg-red-600 px-3 py-1 rounded">Reset All Ratings (server+local)</button>
+      </div>
+      <pre id="raw" class="bg-gray-800 p-4 rounded max-h-96 overflow-auto text-sm"></pre>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const loginDiv = document.getElementById('login');
+    const panel = document.getElementById('panel');
+    const rawPre = document.getElementById('raw');
+    let token = null;
+
+    function showLoginMsg(t, color='text-green-400') { const el=document.getElementById('loginMsg'); el.textContent=t; el.className=color; }
+
+    document.getElementById('loginBtn').addEventListener('click', async ()=>{
+      const user = document.getElementById('user').value;
+      const pass = document.getElementById('pass').value;
+      try{
+        const res = await fetch('/admin/login',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username: user, password: pass})});
+        const js = await res.json();
+        if (!res.ok) { showLoginMsg(js.error||'Login failed','text-red-400'); return; }
+        token = js.token; loginDiv.classList.add('hidden'); panel.classList.remove('hidden'); showLoginMsg(''); fetchRaw();
+      }catch(e){ showLoginMsg('Network error','text-red-400'); }
+    });
+
+    async function fetchRaw(){
+      try{
+        const res = await fetch('/admin/raw', { headers: { 'Authorization': 'Bearer '+token }});
+        const js = await res.json();
+        rawPre.textContent = JSON.stringify(js, null, 2);
+      }catch(e){ rawPre.textContent = 'Failed to load raw data: '+(e.message||e); }
+    }
+
+    document.getElementById('download').addEventListener('click', ()=>{
+      const blob = new Blob([rawPre.textContent], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'raw-data.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('logout').addEventListener('click', async ()=>{
+      try{ await fetch('/admin/logout', { method:'POST', headers:{ 'Authorization':'Bearer '+token }}); }catch(e){}
+      token = null; panel.classList.add('hidden'); loginDiv.classList.remove('hidden'); rawPre.textContent='';
+    });
+
+    document.getElementById('resetData').addEventListener('click', async ()=>{
+      if (!confirm('Reset all ratings on server and local?')) return;
+      try{
+        const res = await fetch('/api/reset', { method:'POST', headers: { 'Authorization':'Bearer '+token }});
+        const js = await res.json();
+        if (!res.ok) alert(js.error||'Reset failed'); else { alert('Reset completed'); fetchRaw(); }
+      }catch(e){ alert('Reset failed: '+(e.message||e)); }
+      // clear local storage
+      try { localStorage.removeItem('mumbai_restaurant_ratings_v1'); } catch(e){}
+    });
+
+    document.getElementById('clearLocal').addEventListener('click', ()=>{ if (!confirm('Clear local ratings in this browser?')) return; localStorage.removeItem('mumbai_restaurant_ratings_v1'); alert('Local ratings cleared'); });
+
+  })();
+  </script>
+</body>
+</html>

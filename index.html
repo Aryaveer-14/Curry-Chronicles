@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Curry Chronicles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="h-full bg-gray-900 text-gray-200 font-inter flex flex-col">
+
+    <div class="page-transition"></div>
+
+    <div class="parallax-container">
+        <video autoplay muted loop id="video-bg">
+            <source src="Bg video.mp4" type="video/mp4" 
+            onerror="this.parentElement.style.display='none'; document.body.style.backgroundColor='#111827';">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <div class="content-wrapper flex flex-col h-full">
+        <header class="w-full z-50">
+            <div class="container mx-auto px-4 sm:px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex-shrink-0">
+                        <a href="index.html" class="nav-link" title="Home">
+                           <h1 class="text-xl font-semibold font-playfair text-white whitespace-nowrap">The Curry Chronicles</h1>
+                        </a>
+                    </div>
+
+                    <div class="hidden md:flex flex-1 justify-center px-4">
+                       <form action="search.html" method="GET" class="relative w-full max-w-lg flex">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                            </div>
+                            <input id="search" name="q" class="block w-full bg-gray-700/50 border border-transparent rounded-l-full py-2 pl-12 pr-3 text-white placeholder-gray-400 focus:outline-none focus:bg-gray-600 focus:border-amber-600 focus:ring-amber-600 sm:text-sm" placeholder="Search for curries..." type="search">
+                            <button type="submit" class="bg-amber-700 hover:bg-amber-800 text-white font-semibold px-6 rounded-r-full transition-colors duration-300">Search</button>
+                        </form>
+                    </div>
+
+                    <div class="flex items-center">
+                         <nav class="hidden md:block">
+                            <ul class="flex items-center space-x-8">
+                                <li><a href="about.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">About</a></li>
+                                <li><a href="contact.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">Contact</a></li>
+                                <li><a href="live-ranking.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">Live Ranking</a></li>
+                                <li><a href="review.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">Review</a></li>
+                                <li><a href="signup.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">Sign Up</a></li>
+                            </ul>
+                        </nav>
+                         <div class="block md:hidden">
+                            <button id="menu-toggle" class="text-gray-300 hover:text-white focus:outline-none">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="menu-content" class="md:hidden hidden mt-4">
+                    <div class="mb-4">
+                       <form action="search.html" method="GET" class="relative w-full max-w-lg mx-auto flex">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                            </div>
+                            <input id="search-mobile" name="q" class="block w-full bg-gray-700/50 border border-transparent rounded-l-full py-2 pl-12 pr-3 text-white placeholder-gray-400 focus:outline-none focus:bg-gray-600 focus:border-amber-600 focus:ring-amber-600 sm:text-sm" placeholder="Search for curries..." type="search">
+                            <button type="submit" class="bg-amber-700 hover:bg-amber-800 text-white font-semibold px-6 rounded-r-full transition-colors duration-300">Search</button>
+                        </form>
+                    </div>
+                    <nav>
+                        <ul class="flex flex-col items-center space-y-2">
+                            <li><a href="about.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">About</a></li>
+                            <li><a href="contact.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">Contact</a></li>
+                            <li><a href="live-ranking.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">Live Ranking</a></li>
+                            <li><a href="review.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">Review</a></li>
+                            <li><a href="signup.html" class="nav-link text-lg text-gray-300 transition-colors duration-300 pb-1">Sign Up</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-grow flex items-center">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col items-center justify-center text-center">
+                    <h1 class="text-4xl sm:text-5xl md:text-7xl font-playfair font-bold text-white mb-2 title-gradient" data-aos="fade-down" data-aos-duration="1000">The Curry Chronicles</h1>
+                    <p class="max-w-xl text-base md:text-lg text-gray-400 mb-4" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="200">
+                        An odyssey of spice and soul. We journey through bustling markets and hidden kitchens to celebrate curry in all its forms.
+                    </p>
+                    <p class="text-sm text-gray-500" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="300">&copy; 2025 The Curry Chronicles. All rights reserved.</p>
+                </div>
+            </div>
+        </main>
+        
+    </div>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menu-toggle');
+            const menuContent = document.getElementById('menu-content');
+            if (menuToggle && menuContent) {
+                menuToggle.addEventListener('click', () => {
+                    menuContent.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
