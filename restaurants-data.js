@@ -44,6 +44,20 @@
     };
   });
 
+  // merge external images if available (match by id or name)
+  try{
+    const ext = window.externalImages || [];
+    restaurants.forEach(r => {
+      const byId = ext.find(e => e.id === r.id);
+      const byName = ext.find(e => e.name && e.name.toLowerCase() === r.name.toLowerCase());
+      const found = byId || byName;
+      if(found){
+        r.imgThumb = found.imgThumb || r.imgThumb;
+        r.imgLarge = found.imgLarge || r.imgLarge;
+      }
+    });
+  }catch(e){ /* ignore */ }
+
   // expose globally
   window.restaurants = restaurants;
 })();

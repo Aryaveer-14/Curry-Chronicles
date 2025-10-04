@@ -59,7 +59,17 @@
             </div>
         </section>
     </div>
+    <!-- modal for image preview -->
+    <div id="img-modal" aria-hidden="true" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70">
+      <div class="max-w-3xl w-full mx-4">
+        <button id="modal-close" class="mb-2 text-white">Close ✕</button>
+        <div class="bg-black p-4 rounded">
+          <img id="modal-img" src="" alt="Preview" class="w-full rounded" />
+        </div>
+      </div>
+    </div>
 
+    <script src="external-images.js"></script>
     <script src="restaurants-data.js"></script>
     <script>
     (function(){
@@ -82,16 +92,27 @@
 
     // thumbnail cell
     const thumbCell = document.createElement('td'); thumbCell.className = 'px-4 py-2';
+    const wrap = document.createElement('div'); wrap.className = 'w-[80px] h-[60px] overflow-hidden rounded-md';
     const img = document.createElement('img');
-  img.alt = r.name || 'restaurant';
-  img.loading = 'lazy';
-  img.width = 80; img.height = 60;
+    img.alt = r.name || 'restaurant';
+    img.loading = 'lazy';
+    img.width = 160; img.height = 120; // natural size for sharper rendering
     img.style.objectFit = 'cover';
-    img.style.borderRadius = '6px';
+    img.style.width = '100%'; img.style.height = '100%';
+    img.style.display = 'block'; img.style.cursor = 'zoom-in';
     // lookup thumb URL from the global restaurants array (restaurants defined earlier)
     try { img.src = (restaurants.find(rr=>rr.id===r.id) || {}).imgThumb || __imgFallback; } catch(e){ img.src = __imgFallback; }
     img.onerror = function(){ this.onerror = null; this.src = __imgFallback; };
-    thumbCell.appendChild(img);
+    // open modal with large image on click
+    img.addEventListener('click', ()=>{
+      const modal = document.getElementById('img-modal');
+      const modalImg = document.getElementById('modal-img');
+      const source = (restaurants.find(rr=>rr.id===r.id) || {}).imgLarge || __imgFallback;
+      modalImg.src = source;
+      modal.classList.remove('hidden'); modal.setAttribute('aria-hidden','false');
+    });
+    wrap.appendChild(img);
+    thumbCell.appendChild(wrap);
 
     const name = document.createElement('td'); name.className='px-4 py-2'; const a = document.createElement('a'); a.href = `restaurant.html?id=${r.id}`; a.textContent = r.name; a.className = 'text-amber-300 hover:underline'; name.appendChild(a); const score = document.createElement('td'); score.className='px-4 py-2'; score.textContent = formatNum(r.score); tr.appendChild(pos); tr.appendChild(thumbCell); tr.appendChild(name); tr.appendChild(score); tbody.appendChild(tr); }); }
 
@@ -128,7 +149,15 @@
           // initial load & polling
           (async ()=>{ await renderAll(); })();
           setInterval(async ()=>{ await renderAll(); }, 10000);
-        });
+          // modal close handlers
+          document.getElementById('modal-close').addEventListener('click', ()=>{
+            const modal = document.getElementById('img-modal'); modal.classList.add('hidden'); modal.setAttribute('aria-hidden','true'); document.getElementById('modal-img').src = '';
+          });
+          document.getElementById('img-modal').addEventListener('click', (ev)=>{
+            if(ev.target === ev.currentTarget){ const modal = document.getElementById('img-modal'); modal.classList.add('hidden'); modal.setAttribute('aria-hidden','true'); document.getElementById('modal-img').src = ''; }
+          });
+          document.addEventListener('keydown', (ev)=>{ if(ev.key === 'Escape'){ const modal = document.getElementById('img-modal'); if(!modal.classList.contains('hidden')){ modal.classList.add('hidden'); modal.setAttribute('aria-hidden','true'); document.getElementById('modal-img').src = ''; } } });
+          });
     })();
     </script>
 </body>
