@@ -60,6 +60,9 @@ app.post('/admin/logout', requireAdmin, (req, res) => {
 
 // Return raw stored data (file-based) or indicate DB mode
 app.get('/admin/raw', requireAdmin, async (req, res) => {
+  if (useMongo) {
+    try { const dump = await mongo.rawDump(); return res.json({ source: 'mongo', data: dump }); } catch(err){ console.warn('Mongo raw dump failed', err); }
+  }
   if (useDb && dbPool) {
     // Best-effort: if DB is used, dump reviews table if exists, otherwise fall back
     try {
@@ -86,14 +89,27 @@ if (!fs.existsSync(DATA_FILE)) {
 
 let useDb = false;
 let dbPool = null;
+let useMongo = false;
+let mongo = null;
 if (process.env.USE_DB === 'true') {
   try {
     dbPool = require('./db');
     useDb = true;
     console.log('Using MySQL database for ratings');
   } catch (e) {
-    console.warn('DB pool load failed, falling back to file storage', e);
+    console.warn('MySQL DB pool load failed, falling back to file storage', e);
     useDb = false;
+  }
+}
+if (process.env.USE_DB === 'mongo') {
+  try {
+    mongo = require('./db-mongo');
+    mongo.connect().then(()=> console.log('Connected to MongoDB')).catch(err=> console.warn('MongoDB connect failed', err));
+    useMongo = true;
+    useDb = false; // prioritize mongo when explicitly requested
+  } catch (e) {
+    console.warn('MongoDB adapter load failed, falling back to file storage', e);
+    useMongo = false;
   }
 }
 
@@ -123,7 +139,9 @@ app.post('/api/rate', async (req, res) => {
     return res.status(400).json({ error: 'Invalid payload' });
   }
 
-  if (useDb && dbPool) {
+  if (useMongo) {
+    try { await mongo.insertRating(id, rating); return res.json({ success: true }); } catch(err){ console.error('Mongo insertRating failed', err); }
+  } else if (useDb && dbPool) {
     try {
       await dbPool.execute('INSERT INTO ratings (restaurant_id, rating) VALUES (?, ?)', [id, rating]);
       return res.json({ success: true });
@@ -163,6 +181,9 @@ app.post('/api/review', async (req, res) => {
 
   // Try to persist in DB with a 'reviews' table (best-effort). Also keep legacy ratings table insert for compatibility.
   if (useDb && dbPool) {
+  if (useMongo) {
+    try { await mongo.insertReview(id, review.scores, review.avg, review.comment); } catch(err){ console.error('Mongo insertReview failed', err); }
+  } else if (useDb && dbPool) {
     try {
       // Try to write to a reviews table (restaurant_id, food, service, ambience, time, accessibility, avg, comment, created_at)
       await dbPool.execute(
@@ -182,6 +203,7 @@ app.post('/api/review', async (req, res) => {
       // fall through to file fallback
     }
   }
+  }
 
   // file-based fallback: store detailed review objects (prefer object entries but tolerate legacy numbers too)
   const data = readData();
@@ -195,6 +217,10 @@ app.post('/api/review', async (req, res) => {
 // GET /api/stats -> { r1: { count: n, avg: x }, ... }
 app.get('/api/stats', async (req, res) => {
   // Try DB first: prefer aggregated data from 'reviews' table (which contains per-category fields) if available
+  if (useDb && dbPool) {
+  if (useMongo) {
+    try { const s = await mongo.getStats(); return res.json(s); } catch(err){ console.error('Mongo getStats failed', err); }
+  }
   if (useDb && dbPool) {
     try {
       // If a reviews table exists, aggregate per-category averages
@@ -238,6 +264,7 @@ app.get('/api/stats', async (req, res) => {
       // fall back to file-based
     }
   }
+  }
 
   // File-based aggregation: support legacy numeric entries (simple averages) and new detailed review objects
   const data = readData();
@@ -278,6 +305,9 @@ app.get('/api/stats', async (req, res) => {
 
 // Reset all ratings (not secure — for local dev only)
 app.post('/api/reset', async (req, res) => {
+  if (useMongo) {
+    try { await mongo.resetRatings(); return res.json({ success: true }); } catch(err){ console.error('Mongo reset failed', err); }
+  }
   if (useDb && dbPool) {
     try {
       await dbPool.query('TRUNCATE TABLE ratings');
