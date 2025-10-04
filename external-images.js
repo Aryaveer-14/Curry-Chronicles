@@ -9,15 +9,16 @@
 
 // Generate a stable list of external images (Unsplash source URLs) for r1..r100
 (() => {
-	const themes = ['restaurant interior','street food','curry','plated meal','seafood','dessert','chef','spices','cozy cafe','dining table','brunch','grill','barbecue','tandoor','vegetarian dish','fusion food','traditional food','modern restaurant','coffee shop','bakery'];
+	// Use picsum.photos stable image IDs to provide fixed direct image URLs.
+	// Picsum IDs from 10..109 (100 images) - thumbs 400x300, large 1200x800
 	const list = [];
-	for(let i=1;i<=100;i++){
-		const theme = themes[(i-1) % themes.length];
-		const q = encodeURIComponent(theme + ' mumbai food');
-		const imgThumb = `https://source.unsplash.com/400x300/?${q}&sig=${i+100}`;
-		const imgLarge = `https://source.unsplash.com/1200x800/?${q}&sig=${i+200}`;
+	for (let i = 1; i <= 100; i++) {
+		const picId = 9 + i; // 10..109
+		const imgThumb = `https://picsum.photos/id/${picId}/400/300`;
+		const imgLarge = `https://picsum.photos/id/${picId}/1200/800`;
 		list.push({ id: `r${i}`, imgThumb, imgLarge });
 	}
 	window.externalImages = list;
 })();
+
 
