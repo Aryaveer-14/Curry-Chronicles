@@ -24,12 +24,17 @@
   ];
 
   const restaurants = names.map((name, idx) => {
-    // pick a theme (rotated) and include restaurant name for context in the Unsplash query
-    const theme = themes[idx % themes.length];
-    const query = encodeURIComponent(`${name} ${theme} mumbai`);
-    // larger image for detail cards, thumbnail for lists; `sig` ensures uniqueness
-    const imgLarge = `https://source.unsplash.com/1200x800/?${query}&sig=${idx + 1}`;
-    const imgThumb = `https://source.unsplash.com/400x300/?${query}&sig=${idx + 101}`;
+    // create a unique SVG placeholder data-URL for each restaurant so images are always visible
+    const safeLabel = (name || 'R').split(/\s+/).map(p=>p[0]).join('').toUpperCase().slice(0,3) || `R${idx+1}`;
+    const hue = (idx * 37) % 360; // varied hue per restaurant
+    const bgLarge = `hsl(${hue} 60% 30%)`;
+    const bgThumb = `hsl(${(hue+40)%360} 60% 35%)`;
+    function svgDataUrl(text, w, h, bg){
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 ${w} ${h}'><rect width='100%' height='100%' fill='${bg}'/><text x='50%' y='50%' fill='#ffffff' font-family='Inter, Arial, Helvetica, sans-serif' font-weight='600' font-size='${Math.round(Math.min(w,h)/5)}' dominant-baseline='middle' text-anchor='middle'>${text}</text></svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+    const imgLarge = svgDataUrl(safeLabel, 1200, 800, bgLarge);
+    const imgThumb = svgDataUrl(safeLabel, 400, 300, bgThumb);
     return {
       id: `r${idx+1}`,
       name,
