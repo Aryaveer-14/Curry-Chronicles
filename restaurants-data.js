@@ -15,9 +15,19 @@
     "The Bombay Post","Sanjay's","Shree Thaker Bhojanalay","The Fish Market"
   ];
 
+  // curated themes to produce a diverse set of images (rotated across restaurants)
+  const themes = [
+    'indian food','restaurant interior','street food','fine dining','seafood','curry','spices','dessert','chef cooking','plated meal',
+    'traditional food','modern restaurant','cozy cafe','coffee','bakery','grill','barbecue','tandoor','vegetarian dish','sweets',
+    'salad','noodles','rice','stew','appetizer','cocktails','wine','brunch','dining table','kitchen',
+    'food closeup','market food','food plating','rustic food','gourmet','fusion food','regional cuisine','snack','tea','street vendor'
+  ];
+
   const restaurants = names.map((name, idx) => {
-    const query = encodeURIComponent(name + ' mumbai restaurant food');
-    // larger image for detail cards, thumbnail for lists
+    // pick a theme (rotated) and include restaurant name for context in the Unsplash query
+    const theme = themes[idx % themes.length];
+    const query = encodeURIComponent(`${name} ${theme} mumbai`);
+    // larger image for detail cards, thumbnail for lists; `sig` ensures uniqueness
     const imgLarge = `https://source.unsplash.com/1200x800/?${query}&sig=${idx + 1}`;
     const imgThumb = `https://source.unsplash.com/400x300/?${query}&sig=${idx + 101}`;
     return {

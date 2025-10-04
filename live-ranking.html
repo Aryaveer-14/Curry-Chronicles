@@ -47,6 +47,7 @@
                     <thead class="sticky top-0 bg-gray-900">
                       <tr class="text-left text-xs text-gray-400">
                         <th class="px-4 py-2">#</th>
+                        <th class="px-4 py-2">Photo</th>
                         <th class="px-4 py-2">Restaurant</th>
                         <th class="px-4 py-2">Score</th>
                       </tr>
@@ -74,7 +75,25 @@
 
         function formatNum(v){ return (v===null||v===undefined) ? '—' : (Math.round(v*10)/10).toFixed(1); }
 
-  function fillTableMain(rows){ const tbody = document.querySelector('#table-main tbody'); tbody.innerHTML=''; rows.forEach((r,idx)=>{ const tr = document.createElement('tr'); tr.className = idx%2? 'bg-neutral-900':'bg-black'; const pos = document.createElement('td'); pos.className='px-4 py-2'; pos.textContent = (idx+1).toString(); const name = document.createElement('td'); name.className='px-4 py-2'; const a = document.createElement('a'); a.href = `restaurant.html?id=${r.id}`; a.textContent = r.name; a.className = 'text-amber-300 hover:underline'; name.appendChild(a); const score = document.createElement('td'); score.className='px-4 py-2'; score.textContent = formatNum(r.score); tr.appendChild(pos); tr.appendChild(name); tr.appendChild(score); tbody.appendChild(tr); }); }
+  // small inline SVG fallback (data URL) to use when external image fails to load
+  const __imgFallback = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="120"><rect width="100%" height="100%" fill="#0f172a"/><text x="50%" y="50%" fill="#9ca3af" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle" text-anchor="middle">No image</text></svg>`);
+
+  function fillTableMain(rows){ const tbody = document.querySelector('#table-main tbody'); tbody.innerHTML=''; rows.forEach((r,idx)=>{ const tr = document.createElement('tr'); tr.className = idx%2? 'bg-neutral-900':'bg-black'; const pos = document.createElement('td'); pos.className='px-4 py-2'; pos.textContent = (idx+1).toString();
+
+    // thumbnail cell
+    const thumbCell = document.createElement('td'); thumbCell.className = 'px-4 py-2';
+    const img = document.createElement('img');
+  img.alt = r.name || 'restaurant';
+  img.loading = 'lazy';
+  img.width = 80; img.height = 60;
+    img.style.objectFit = 'cover';
+    img.style.borderRadius = '6px';
+    // lookup thumb URL from the global restaurants array (restaurants defined earlier)
+    try { img.src = (restaurants.find(rr=>rr.id===r.id) || {}).imgThumb || __imgFallback; } catch(e){ img.src = __imgFallback; }
+    img.onerror = function(){ this.onerror = null; this.src = __imgFallback; };
+    thumbCell.appendChild(img);
+
+    const name = document.createElement('td'); name.className='px-4 py-2'; const a = document.createElement('a'); a.href = `restaurant.html?id=${r.id}`; a.textContent = r.name; a.className = 'text-amber-300 hover:underline'; name.appendChild(a); const score = document.createElement('td'); score.className='px-4 py-2'; score.textContent = formatNum(r.score); tr.appendChild(pos); tr.appendChild(thumbCell); tr.appendChild(name); tr.appendChild(score); tbody.appendChild(tr); }); }
 
         async function renderAll(){ const serverStats = await fetchStatsFromServer(); const local = loadRatings(); const statsLookup = {};
             restaurants.forEach(r=>{ const s = serverStats && serverStats[r.id] ? serverStats[r.id] : (function(){ const arr = local[r.id]||[]; const count = arr.length; const avg = count? (arr.reduce((a,b)=>a+b,0)/count):0; return { count, avg, breakdown: null }; })(); statsLookup[r.id] = s; });
